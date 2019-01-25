@@ -15,7 +15,6 @@ const { tmpdir,platform }= require("os");
 const { exec } = require("pkg");
 const { join } = require("path");
 const { spawn } = require("child_process");
-const resourcehacker = require("resourcehacker");
 
 function writeDockerFile(views, connectors, path) {
     return new Promise((resolve, reject) => {
@@ -43,58 +42,6 @@ function writeDockerComposeFile(views, connectors, path) {
     });
 }
 
-function setExecutionLevel(filepath, os) {
-    return new Promise((resolve, reject) => {
-        if(os === "win") {
-            const args = [
-                "-open", 
-                filepath,
-                "-save", 
-                filepath,
-                "-action", 
-                "addoverwrite", 
-                "-res", 
-                join(__dirname, "resources/manifest.xml"),
-                "-mask", 
-                "MANIFEST,1,1033"
-            ];
-
-            resourcehacker(args.join(" "), () => {
-                // always resolve (even if wine was not found on some platforms)
-                resolve();
-            });
-        } else {
-            resolve();
-        }
-    });
-}
-
-function replaceIcon(filepath, os) {
-    return new Promise((resolve, reject) => {
-        if(os === "win") {
-            const args = [
-                "-open", 
-                filepath,
-                "-save", 
-                filepath,
-                "-action", 
-                "addskip", 
-                "-res", 
-                join(__dirname, "resources/icon.ico"),
-                "-mask", 
-                "ICONGROUP,MAINICON,"
-            ];
-
-            resourcehacker(args.join(" "), () => {
-                // always resolve (even if wine was not found on some platforms)
-                resolve();
-            });
-        } else {
-            resolve();
-        }
-    });
-}
-
 function createInstaller(views, connectors, os) {
     return new Promise((resolve, reject) => {
         const folder = join(tmpdir(),uuidv4());
@@ -113,8 +60,6 @@ function createInstaller(views, connectors, os) {
                             return exec([folder, "--targets", `node8-${os}-x64`, "--output", filepath]);
                         });
                     })
-                    .then(() => replaceIcon(filepath, os))
-                    // .then(() => setExecutionLevel(filepath, os))
                     .then(() => {    
                         fs.readFile(filepath, (error, file) => {
                             if (error) {
